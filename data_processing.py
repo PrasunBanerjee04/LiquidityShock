@@ -11,7 +11,7 @@ def filter_columns(data):
         data.drop(f'time{i}', axis=1, inplace=True)
         data.drop(f'transtype{i}', axis=1, inplace=True)
     
-    for i in range(71, 101):
+    for i in range(61, 101):
         data.drop(f'bid{i}', axis=1, inplace=True)
         data.drop(f'ask{i}', axis=1, inplace=True)
 
@@ -24,7 +24,7 @@ def scale_data(data):
 def split_data(data):
     #returns matrices X, y
     target_columns = []
-    for i in range(50, 71):
+    for i in range(51, 61):
         target_columns.append(f'bid{i}')
         target_columns.append(f'ask{i}')
     
