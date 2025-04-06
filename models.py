@@ -140,4 +140,43 @@ class SVMClassifier:
         X = df[self.input_cols].values
         return self.model.predict(X)
 
-#TODO: Sequence to one transformer model 
+class TransformerRegressor(nn.Module):
+    def __init__(self, timestep_dim=2, seq_len=50, aux_dim=4, d_model=64, nhead=4, num_layers=2, dim_feedforward=128, output_dim=20):
+        super().__init__()
+
+        self.seq_len = seq_len
+        self.timestep_dim = timestep_dim
+        self.aux_dim = aux_dim
+
+        self.input_proj = nn.Linear(timestep_dim, d_model)
+        self.positional_encoding = nn.Parameter(torch.randn(seq_len, d_model))
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+
+        self.output_layer = nn.Sequential(
+            nn.Linear(d_model + aux_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
+        )
+
+        def forward(self, x):
+            batch_size = x.shape[0]
+
+            # Split sequence and aux features
+            seq = x[:, :self.seq_len * self.timestep_dim]  # (B, 100)
+            aux = x[:, self.seq_len * self.timestep_dim:]  # (B, 4)
+
+            seq = seq.view(batch_size, self.seq_len, self.timestep_dim)  # (B, 50, 2)
+            seq = self.input_proj(seq) + self.positional_encoding.unsqueeze(0)  # (B, 50, d_model)
+
+            z = self.transformer(seq)  # (B, 50, d_model)
+            pooled = z.mean(dim=1)     # (B, d_model)
+
+            combined = torch.cat([pooled, aux], dim=1)  # (B, d_model + aux_dim)
+            return self.output_layer(combined)
