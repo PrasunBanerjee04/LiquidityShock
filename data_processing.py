@@ -47,8 +47,7 @@ def get_matrices(df):
 def apply_kmeans_labels(df, y_vector):
     kmeans_model = KMEANS(n_clusters=5)
     clusters = kmeans_model.fit(y_vector)
-    df['cluster_label'] = clusters
-    return df
+    return clusters
 
 
         

@@ -122,11 +122,16 @@ class SVMClassifier:
         self.model = SVC(kernel=kernel, C=C, gamma=gamma)
         self.input_cols = None
 
-    def fit(self, df, feature_cols, label_col):
-        self.input_cols = feature_cols
-        X = df[feature_cols].values
-        y = df[label_col].values
-        self.model.fit(X, y)
+    def fit(self, X, y, feature_cols=None):
+        if isinstance(X, pd.DataFrame):
+            if feature_cols is None:
+                feature_cols = X.columns.tolist()
+            self.input_cols = feature_cols
+            X_vals = X[feature_cols].values
+        else:
+            X_vals = X  # assume already a NumPy array
+
+        self.model.fit(X_vals, y)
 
     def predict(self, row):
         if self.input_cols is None:
@@ -139,6 +144,7 @@ class SVMClassifier:
             raise ValueError("Model has not been trained yet.")
         X = df[self.input_cols].values
         return self.model.predict(X)
+
 
 class TransformerRegressor(nn.Module):
     def __init__(self, timestep_dim=2, seq_len=50, aux_dim=4, d_model=64, nhead=4, num_layers=2, dim_feedforward=128, output_dim=20):
@@ -165,18 +171,18 @@ class TransformerRegressor(nn.Module):
             nn.Linear(64, output_dim)
         )
 
-        def forward(self, x):
-            batch_size = x.shape[0]
+    def forward(self, x):
+        batch_size = x.shape[0]
 
             # Split sequence and aux features
-            seq = x[:, :self.seq_len * self.timestep_dim]
-            aux = x[:, self.seq_len * self.timestep_dim:]
+        seq = x[:, :self.seq_len * self.timestep_dim]
+        aux = x[:, self.seq_len * self.timestep_dim:]
 
-            seq = seq.view(batch_size, self.seq_len, self.timestep_dim)
-            seq = self.input_proj(seq) + self.positional_encoding.unsqueeze(0)
+        seq = seq.view(batch_size, self.seq_len, self.timestep_dim)
+        seq = self.input_proj(seq) + self.positional_encoding.unsqueeze(0)
 
-            z = self.transformer(seq)
-            pooled = z.mean(dim=1)
+        z = self.transformer(seq)
+        pooled = z.mean(dim=1)
 
-            combined = torch.cat([pooled, aux], dim=1)
-            return self.output_layer(combined)
+        combined = torch.cat([pooled, aux], dim=1)
+        return self.output_layer(combined)
