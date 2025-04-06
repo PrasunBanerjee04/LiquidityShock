@@ -169,14 +169,14 @@ class TransformerRegressor(nn.Module):
             batch_size = x.shape[0]
 
             # Split sequence and aux features
-            seq = x[:, :self.seq_len * self.timestep_dim]  # (B, 100)
-            aux = x[:, self.seq_len * self.timestep_dim:]  # (B, 4)
+            seq = x[:, :self.seq_len * self.timestep_dim]
+            aux = x[:, self.seq_len * self.timestep_dim:]
 
-            seq = seq.view(batch_size, self.seq_len, self.timestep_dim)  # (B, 50, 2)
-            seq = self.input_proj(seq) + self.positional_encoding.unsqueeze(0)  # (B, 50, d_model)
+            seq = seq.view(batch_size, self.seq_len, self.timestep_dim)
+            seq = self.input_proj(seq) + self.positional_encoding.unsqueeze(0)
 
-            z = self.transformer(seq)  # (B, 50, d_model)
-            pooled = z.mean(dim=1)     # (B, d_model)
+            z = self.transformer(seq)
+            pooled = z.mean(dim=1)
 
-            combined = torch.cat([pooled, aux], dim=1)  # (B, d_model + aux_dim)
+            combined = torch.cat([pooled, aux], dim=1)
             return self.output_layer(combined)

@@ -1,4 +1,5 @@
 import pandas as pd
+from models import KMEANS
 
 def filter_columns(data):
     #takes in dataframe, returns with processed columns 
@@ -32,6 +33,22 @@ def split_data(data):
     y = data[target_columns]
 
     return X, y
+
+
+# load and process data
+def get_matrices(df):
+    data = filter_columns(df)
+    scaled_data = scale_data(data)
+    X, y = split_data(scaled_data)
+    return X, y
+        
+
+# apply k-means clusters, returns augmented df 
+def apply_kmeans_labels(df, y_vector):
+    kmeans_model = KMEANS(n_clusters=5)
+    clusters = kmeans_model.fit(y_vector)
+    df['cluster_label'] = clusters
+    return df
 
 
         
