@@ -68,10 +68,11 @@ class GaussianDiscriminantAnalysis:
         self.inv_shared_cov = None
         self.const_term = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, eps=1e-4):
         """
         X: torch.Tensor of shape (n_samples, n_features)
         y: torch.Tensor of shape (n_samples,)
+        eps: small constant for regularization to ensure invertibility
         """
         self.classes = torch.unique(y).tolist()
         n_samples, n_features = X.shape
@@ -92,8 +93,12 @@ class GaussianDiscriminantAnalysis:
             cov_sum += centered.T @ centered
 
         self.shared_cov = cov_sum / n_samples
+
+        # Add small multiple of identity to avoid singular matrix
+        self.shared_cov += eps * torch.eye(n_features)
+
         self.inv_shared_cov = torch.inverse(self.shared_cov)
-        self.const_term = -0.5 * n_features * torch.log(torch.tensor(2 * np.pi)) - 0.5 * torch.logdet(self.shared_cov)
+        self.const_term = -0.5 * n_features * torch.log(torch.tensor(2 * torch.pi)) - 0.5 * torch.logdet(self.shared_cov)
 
     def predict(self, x):
         """
